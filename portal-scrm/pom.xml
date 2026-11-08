@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.bill.portal</groupId>
+        <artifactId>portal-service</artifactId>
+        <version>4.1.0</version>
+    </parent>
+
+    <artifactId>portal-scrm</artifactId>
+    <packaging>jar</packaging>
+
+    <description>SCRM</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.bill.portal</groupId>
+            <artifactId>portal-common-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.binarywang</groupId>
+            <artifactId>wx-java-cp-tp-multi-spring-boot-starter</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.binarywang</groupId>
+            <artifactId>wx-java-cp-multi-spring-boot-starter</artifactId>
+        </dependency>
+    </dependencies>
+</project>

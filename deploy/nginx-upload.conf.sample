@@ -1,0 +1,51 @@
+# 文件存储 —— Nginx 直服配置样例（local 类型的生产形态）
+#
+# 背景：local 类型有两种部署形态，由 file.storage.public-base-url 切换：
+#   1) 本地开发：public-base-url 留空 → 文件经应用端点
+#      /system/file/{id}/content 读取（应用转发，便于调试）
+#   2) 生产环境：public-base-url 配为本文件的 /upload/ 前缀 → 接口下发直连 url，
+#      浏览器直接向 Nginx 取文件，应用不转发字节、不占带宽
+#
+# 使用方式：
+#   1) 把本文件内容并入站点 server 块（或 include 进来）；
+#   2) alias 指向与 file.storage.root-dir 相同的目录；
+#   3) 设置环境变量（或 application.yml）：
+#        FILE_STORAGE_TYPE=local
+#        FILE_STORAGE_ROOT_DIR=/data/portal/upload
+#        FILE_STORAGE_PUBLIC_BASE_URL=https://static.example.com/upload
+#
+# 安全说明：
+#   - 该目录下的对象全部可被匿名读取，请勿存放敏感文件（需要鉴权的场景
+#     请保持 public-base-url 为空，走应用端点）；
+#   - 对象名由服务端生成（UUID + 白名单扩展名），目录按 clientId/日期归档，
+#     因此可直接关闭目录列表（autoindex off，默认值）；
+#   - 若前后端不同域，需按实际域名调整下方 Access-Control-Allow-Origin。
+
+# 上传目录直服（对应 public-base-url = https://<host>/upload）
+location /upload/ {
+    alias /data/portal/upload/;
+
+    # 关闭目录列表；不存在的对象直接 404
+    autoindex off;
+    try_files $uri =404;
+
+    # 静态资源缓存（文件名含 UUID，内容不会变更，可长缓存）
+    expires 30d;
+    add_header Cache-Control "public, max-age=2592000, immutable";
+
+    # 跨域（前后端同域时可删除；不要与凭证同用时配置 *）
+    add_header Access-Control-Allow-Origin "*" always;
+    add_header Access-Control-Allow-Methods "GET, HEAD, OPTIONS" always;
+
+    # 大文件下载：关闭代理缓冲、按需限速（可选）
+    sendfile on;
+    tcp_nopush on;
+
+    # 禁止执行该目录下任何脚本（纵深防御）
+    location ~* \.(php|jsp|asp|aspx|sh|exe)$ {
+        deny all;
+    }
+}
+
+# 说明：应用侧仍需保留 /system/file/{id}/content 端点，
+# 用于未配置 public-base-url 的环境（本地开发）以及需要应用鉴权的场景。

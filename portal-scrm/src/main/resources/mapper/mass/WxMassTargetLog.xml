@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bill.portal.scrm.mass.mapper.WxMassTargetLogMapper">
+
+    <insert id="batchUpsert">
+        INSERT INTO wx_mass_target_log (
+        id,task_id, invoke_id, chat_type, target_id,
+        user_id, status, send_time, tenant_id,create_time,update_time
+        )
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.id},#{item.taskId}, #{item.invokeId}, #{item.chatType}, #{item.targetId},
+            #{item.userId}, #{item.status}, #{item.sendTime}, #{item.tenantId},
+            #{item.createTime},#{item.updateTime}
+            )
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+        status = VALUES(status),
+        send_time = VALUES(send_time),
+        update_time = VALUES(update_time)
+    </insert>
+
+    <!-- 任务维度送达统计：状态口径 0-未发送(成员未确认) 1-已发送 2-失败(非好友) 3-失败(已收到其他群发) -->
+    <select id="statByTaskIds" resultType="com.bill.portal.scrm.mass.dto.WxMassTaskStatVO">
+        SELECT
+            task_id                                     AS taskId,
+            COUNT(DISTINCT invoke_id)                   AS batchCnt,
+            COUNT(*)                                    AS totalCnt,
+            SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) AS deliveredCnt,
+            SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) AS unsentCnt,
+            SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) AS failFriendCnt,
+            SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END) AS failOtherCnt
+        FROM wx_mass_target_log
+        WHERE task_id IN
+        <foreach collection="taskIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        GROUP BY task_id
+    </select>
+
+    <!-- 批次维度送达统计：按调用记录聚合 -->
+    <select id="statByTaskGroupInvoke" resultType="com.bill.portal.scrm.mass.dto.WxMassBatchStatVO">
+        SELECT
+            invoke_id                                   AS invokeId,
+            COUNT(*)                                    AS totalCnt,
+            SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) AS deliveredCnt,
+            SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) AS unsentCnt,
+            SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) AS failFriendCnt,
+            SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END) AS failOtherCnt
+        FROM wx_mass_target_log
+        WHERE task_id = #{taskId}
+        GROUP BY invoke_id
+        ORDER BY invoke_id DESC
+    </select>
+
+    <!-- 批次 + 成员维度发送统计：成员发送明细 -->
+    <select id="statByTaskGroupInvokeUser" resultType="com.bill.portal.scrm.mass.dto.WxMassUserStatVO">
+        SELECT
+            invoke_id                                   AS invokeId,
+            user_id                                     AS userId,
+            COUNT(*)                                    AS totalCnt,
+            SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) AS deliveredCnt,
+            SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) AS unsentCnt,
+            SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) AS failFriendCnt,
+            SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END) AS failOtherCnt
+        FROM wx_mass_target_log
+        WHERE task_id = #{taskId}
+        GROUP BY invoke_id, user_id
+    </select>
+
+</mapper>

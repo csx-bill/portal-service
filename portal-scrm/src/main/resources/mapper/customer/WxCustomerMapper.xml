@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bill.portal.scrm.customer.mapper.WxCustomerMapper">
+
+    <!--
+      版本号由 SyncVersionService 按企业全局递增（不区分同步类型），
+      保证全量/增量等不同 syncType 的版本号落在同一序列、互相可比。
+      follow_state 来源于客户同步（follow_user.state），随 upsert 更新；
+      handover_to_userid / handover_time 为本地扩展字段（交接标记），
+      不在全量同步 upsert 列中，同步不会覆盖。
+    -->
+    <insert id="batchUpsert">
+        INSERT INTO wx_customer (
+        id,corp_id, external_user_id, name, avatar,
+        type, gender, union_id, position, corp_name, corp_full_name, user_id, extra_data,
+        sync_version,tenant_id,create_time,update_time,del_flag,follow_state,
+        lost_flag, lost_by, lost_reason, lost_time, follow_create_time, handover_to_userid, handover_time
+        )
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.id},#{item.corpId}, #{item.externalUserId}, #{item.name}, #{item.avatar},
+            #{item.type}, #{item.gender}, #{item.unionId}, #{item.position}, #{item.corpName}, #{item.corpFullName}, #{item.userId},
+            #{item.extraData},#{item.syncVersion},#{item.tenantId},
+            #{item.createTime},#{item.updateTime},#{item.delFlag},#{item.followState},
+            #{item.lostFlag},#{item.lostBy},#{item.lostReason},#{item.lostTime},#{item.followCreateTime},#{item.handoverToUserid},#{item.handoverTime}
+            )
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+        name = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(name), name),
+        avatar = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(avatar), avatar),
+        type = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(type), type),
+        gender = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(gender), gender),
+        position = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(position), position),
+        union_id = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(union_id), union_id),
+        corp_name = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(corp_name), corp_name),
+        corp_full_name = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(corp_full_name), corp_full_name),
+        extra_data = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), CAST(VALUES(extra_data) AS JSON), extra_data),
+        sync_version = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(sync_version), sync_version),
+        update_time = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(update_time), update_time),
+        del_flag = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(del_flag), del_flag),
+        follow_state = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(follow_state), follow_state),
+        lost_flag = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(lost_flag), lost_flag),
+        lost_by = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(lost_by), lost_by),
+        lost_reason = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(lost_reason), lost_reason),
+        lost_time = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(lost_time), lost_time),
+        follow_create_time = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(follow_create_time), follow_create_time),
+        handover_to_userid = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(handover_to_userid), handover_to_userid),
+        handover_time = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(handover_time), handover_time)
+    </insert>
+
+</mapper>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bill.portal.scrm.contact.mapper.WxUserMapper">
+
+    <insert id="batchUpsert">
+        INSERT INTO wx_user (
+        id,corp_id, user_id, name, mobile,
+        depart_ids, main_department, position, gender, email, status, avatar, open_user_id,
+        extra_data,sync_version,tenant_id,create_time,update_time
+        )
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.id},#{item.corpId}, #{item.userId}, #{item.name}, #{item.mobile},#{item.departIds},
+            #{item.mainDepartment}, #{item.position}, #{item.gender}, #{item.email}, #{item.status}, #{item.avatar}, #{item.openUserId},
+            #{item.extraData},#{item.syncVersion},#{item.tenantId},
+            #{item.createTime},#{item.updateTime}
+            )
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+        name = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(name), name),
+        mobile = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(mobile), mobile),
+        depart_ids = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), CAST(VALUES(depart_ids) AS JSON), depart_ids),
+        main_department = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(main_department), main_department),
+        position = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(position), position),
+        gender = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(gender), gender),
+        email = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(email), email),
+        status = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(status), status),
+        avatar = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(avatar), avatar),
+        open_user_id = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(open_user_id), open_user_id),
+        extra_data = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), CAST(VALUES(extra_data) AS JSON), extra_data),
+        sync_version = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(sync_version), sync_version),
+        update_time = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(update_time), update_time)
+    </insert>
+
+</mapper>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bill.portal.scrm.tag.mapper.WxCorpTagGroupMapper">
+
+    <insert id="batchUpsert">
+        INSERT INTO wx_corp_tag_group (
+        id,corp_id, group_id, group_name, `order`,extra_data,del_flag,
+        sync_version,tenant_id,create_time,update_time
+        )
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.id},#{item.corpId}, #{item.groupId}, #{item.groupName},#{item.order},
+            #{item.extraData},#{item.delFlag},#{item.syncVersion},#{item.tenantId},
+            #{item.createTime},#{item.updateTime}
+            )
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+        group_name = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(group_name), group_name),
+        `order` = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(`order`), `order`),
+        extra_data = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), CAST(VALUES(extra_data) AS JSON), extra_data),
+        del_flag = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(del_flag), del_flag),
+        sync_version = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(sync_version), sync_version),
+        update_time = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(update_time), update_time)
+    </insert>
+
+</mapper>

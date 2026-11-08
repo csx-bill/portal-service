@@ -1,0 +1,190 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: portal-service
+  servlet:
+    multipart:
+      # 文件管理不限制文件大小（-1 为不限），仅受磁盘空间约束
+      max-file-size: -1
+      max-request-size: -1
+  messages:
+    # 各业务模块的消息资源基名（逗号分隔追加），默认语言为基名无后缀文件（中文）
+    basename: system-messages
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+  datasource:
+    #driver-class-name: com.mysql.cj.jdbc.Driver
+    driver-class-name: com.p6spy.engine.spy.P6SpyDriver
+    url: jdbc:p6spy:mysql://127.0.0.1:3306/portal-service?useSSL=false&useUnicode=true&characterEncoding=UTF-8
+    username: root
+    password: 123456
+
+# 多租户配置
+tenant:
+  # 多租户的数据表集合
+  tables:
+    # 系统模块
+    - sys_role
+    - sys_role_menu
+    - sys_role_dept
+    - sys_user_role
+    - sys_user_tenant
+    - sys_dept
+    - sys_user_dept
+    - sys_dict
+    - sys_dict_item
+    - sys_file
+    - sys_file_group
+    # SCRM模块
+    - wx_sync_version
+    - wx_corp_auth
+    - wx_user
+    - wx_user_binding
+    - wx_department
+    - wx_customer
+    - wx_corp_tag
+    - wx_corp_tag_group
+    - wx_group_chat
+    - wx_group_chat_member
+    - wx_group_chat_member_log
+    - wx_acquisition_link
+    - wx_mass_task
+    - wx_mass_content
+    - wx_mass_content_log
+    - wx_mass_target
+    - wx_mass_target_log
+    - wx_mass_invoke_log
+    - wx_moment_task
+    - wx_moment_content
+    - wx_moment_content_log
+    - wx_moment_send_log
+    - wx_moment_invoke_log
+    - wx_welcome_msg
+    - wx_welcome_msg_bind
+    - wx_welcome_msg_rule
+
+# knife4j的增强配置
+knife4j:
+  enable: true
+  setting:
+    language: zh-CN
+  # 是否生产环境
+  production: false
+
+
+# =========================================================
+# 安全配置：免认证地址（Ant 风格）
+# 命中这些路径的请求跳过【所有】拦截器（租户/客户端/数据权限/Sa-Token），
+# 适用于登录、OAuth2、第三方回调等无令牌无请求头的入口
+# =========================================================
+security:
+  ignore-urls:
+    - /oauth2/**
+    # 企微回调：腾讯服务器匿名调用
+    - /scrm/cp/self/**
+
+############## Sa-Token 配置 (文档: https://sa-token.cc) ##############
+sa-token:
+  # token 名称（同时也是 cookie 名称）
+  token-name: Authorization
+  # 请求头形如 "Authorization: Bearer xxx"，StpUtil 读取时剥离 Bearer 前缀
+  token-prefix: Bearer
+  # token 有效期（单位：秒） 默认30天，-1 代表永久有效
+  timeout: 2592000
+  # token 最低活跃频率（单位：秒），如果 token 超过此时间没有访问系统就会被冻结，默认-1 代表不限制，永不冻结
+  active-timeout: -1
+  # 是否允许同一账号多地同时登录 （为 true 时允许一起登录, 为 false 时新登录挤掉旧登录）
+  is-concurrent: true
+  # 在多人登录同一账号时，是否共用一个 token （为 true 时所有登录共用一个 token, 为 false 时每次登录新建一个 token）
+  is-share: false
+  # token 风格（默认可取值：uuid、simple-uuid、random-32、random-64、random-128、tik）
+  token-style: random-64
+  # 是否输出操作日志
+  is-log: true
+
+
+# =========================================================
+# 全局开关（SUITE = 服务商，SELF = 企业内部应用）
+# =========================================================
+xqt:
+  wx:
+    mode: SELF   # SUITE | SELF
+
+# =========================================================
+# 企业微信配置
+# =========================================================
+wx:
+  cp:
+    # =====================================================
+    # （服务商 / SUITE）
+    # =====================================================
+    tp:
+      # Redis 存储配置（必须）
+      config-storage:
+        type: redistemplate
+        redis:
+          host: 127.0.0.1
+          port: 6379
+
+      # 应用列表
+      corps:
+        # 第一个 应用 key 固定 xqt-scrm
+        xqt-scrm:
+          corpId: ww9afab8c4ad4b3c1c
+          providerSecret: provider_secret_a
+          suiteId: ww_suite_001
+          suiteSecret: suite_secret_001
+          token: suite_token_001
+          encodingAESKey: suite_aes_key_001
+
+    # =====================================================
+    # 自建应用（企业内部 / SELF）
+    # =====================================================
+    config-storage:
+      type: redistemplate
+      redis:
+        host: localhost
+        port: 6379
+    # 企业内部应用列表
+    corps:
+      # 第一个 应用 key 固定 xqt-scrm
+      xqt-scrm:
+        corpId: ww9afab8c4ad4b3c1c
+        corpSecret: 2567vp8QhUM3bmwQe4I1uebqS0I-FBL7fzYOoYZQxgY
+        agentId: 1000020
+        token: hiD2NYgI9HWkMQdcWPmM
+        aesKey: JDxAqwasN3kppOzrGxDAln9PrawlinCPT34cQN3byfz
+
+# =========================================================
+# 文件存储配置
+# upload-type 决定使用哪种存储：local（默认）| s3，二者只会生效一个，
+# 不生效的那一段配置不会被读取，可以直接删掉
+# =========================================================
+file:
+  upload-type: local
+  # upload-type: local 时生效
+  local:
+    # 本地文件存储根目录
+    # 下发地址为 /{bucket}/{clientId}/{dir}/{fileName}（桶名默认 local，即 /local/{clientId}/xxx.png）
+    # 本地开发：应用直接服务该前缀，前端把 /{bucket} 代理到应用即可（见 LocalFileResourceConfig）
+    # 生产环境：由 nginx 映射到本目录下的同名子目录：location /local/ { alias {base-path}/local/; }
+    base-path: ./data/files
+  # upload-type: s3 时生效
+  s3:
+    # 切换为 s3 时填写真实地址与密钥
+    endpoint: http://127.0.0.1:9000
+    # 下载地址使用的对外地址，客户端访问不到 endpoint（如容器内网地址）时配置
+    public-endpoint: http://127.0.0.1:9000
+    region: us-east-1
+    access-key: minioadmin
+    secret-key: minioadmin
+    # 访问风格：false = virtual-host（默认，桶名作为子域，AWS S3 / 新 SDK 标准做法；
+    #   需要 DNS 能把 {bucket}.{endpoint} 解析到对象存储，MinIO 需配置 MINIO_DOMAIN）
+    #   true = path style（桶名在路径里，MinIO 用 IP 直连等无域名场景使用）
+    path-style-access: false
+    # 请求体编码：AWS S3 / MinIO / 腾讯云 COS 保持 true；阿里云 OSS 不支持 aws-chunked，需设为 false
+    chunked-encoding: true

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bill.portal.scrm.groupchat.mapper.WxGroupChatMapper">
+
+    <insert id="batchUpsert">
+        INSERT INTO wx_group_chat (
+        id,corp_id, chat_id,chat_name,group_create_time,owner,notice,status,member_num,admin_list,
+        sync_version,tenant_id,create_time,update_time,member_version
+        )
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.id},#{item.corpId},#{item.chatId},#{item.chatName},#{item.groupCreateTime},#{item.owner},#{item.notice},#{item.status},#{item.memberNum},
+            #{item.adminList},#{item.syncVersion},#{item.tenantId},
+            #{item.createTime},#{item.updateTime},#{item.memberVersion}
+            )
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+        chat_name = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(chat_name), chat_name),
+        group_create_time = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(group_create_time), group_create_time),
+        owner = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(owner), owner),
+        notice = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(notice), notice),
+        status = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(status), status),
+        member_num = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(member_num), member_num),
+        admin_list = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(admin_list), admin_list),
+        sync_version = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(sync_version), sync_version),
+        update_time = IF(sync_version <![CDATA[ <= ]]> VALUES(sync_version), VALUES(update_time), update_time),
+        <!-- member_version 为本地事件一致性字段：全量同步（NULL）不覆盖 -->
+        member_version = IF(VALUES(member_version) IS NOT NULL, VALUES(member_version), member_version)
+    </insert>
+
+</mapper>

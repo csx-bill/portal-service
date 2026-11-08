@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bill.portal.scrm.dashboard.mapper.WxDashboardMapper">
+
+    <select id="countCustomer" resultType="int">
+        SELECT COUNT(*)
+        FROM wx_customer
+        WHERE corp_id = #{corpId}
+    </select>
+
+    <select id="countCustomerLostSince" resultType="int">
+        SELECT COUNT(*)
+        FROM wx_customer
+        WHERE corp_id = #{corpId}
+          AND lost_flag = 1
+          AND lost_time &gt;= #{since}
+    </select>
+
+    <select id="countNewCustomerByDay" resultType="map">
+        SELECT DATE(follow_create_time) AS statDate, COUNT(*) AS cnt
+        FROM wx_customer
+        WHERE corp_id = #{corpId}
+          AND follow_create_time &gt;= #{since}
+        GROUP BY DATE(follow_create_time)
+    </select>
+
+    <select id="countNewGroupByDay" resultType="map">
+        SELECT DATE(COALESCE(group_create_time, create_time)) AS statDate, COUNT(*) AS cnt
+        FROM wx_group_chat
+        WHERE corp_id = #{corpId}
+          AND del_flag = 0
+          AND (dismiss_flag = 0 OR dismiss_flag IS NULL)
+          AND COALESCE(group_create_time, create_time) &gt;= #{since}
+        GROUP BY DATE(COALESCE(group_create_time, create_time))
+    </select>
+
+    <select id="countNewMemberByDay" resultType="map">
+        SELECT DATE(join_time) AS statDate, COUNT(*) AS cnt
+        FROM wx_group_chat_member
+        WHERE corp_id = #{corpId}
+          AND join_time &gt;= #{since}
+        GROUP BY DATE(join_time)
+    </select>
+
+    <select id="countQuitMemberByDay" resultType="map">
+        SELECT DATE(change_time) AS statDate, COUNT(*) AS cnt
+        FROM wx_group_chat_member_log
+        WHERE corp_id = #{corpId}
+          AND change_type = 2
+          AND change_time &gt;= #{since}
+        GROUP BY DATE(change_time)
+    </select>
+
+    <select id="groupTotals" resultType="map">
+        SELECT COUNT(*)                                AS chatTotal,
+               COALESCE(SUM(member_num), 0)            AS memberTotal
+        FROM wx_group_chat
+        WHERE corp_id = #{corpId}
+          AND del_flag = 0
+          AND (dismiss_flag = 0 OR dismiss_flag IS NULL)
+    </select>
+
+    <!-- 窗口内群发送达聚合：明细按调用记录时间窗过滤（status 口径 0-未发送 1-已送达 2/3-失败） -->
+    <select id="massRateSince" resultType="map">
+        SELECT COUNT(*)                                             AS totalCnt,
+               SUM(CASE WHEN t.status = 1 THEN 1 ELSE 0 END)        AS deliveredCnt
+        FROM wx_mass_target_log t
+        INNER JOIN wx_mass_invoke_log i ON i.id = t.invoke_id
+        WHERE i.corp_id = #{corpId}
+          AND i.status = 'SUCCESS'
+          AND i.create_time &gt;= #{since}
+          <if test="until != null">
+              AND i.create_time &lt; #{until}
+          </if>
+    </select>
+
+    <!-- 窗口内朋友圈发表聚合（publish_status 口径 0-未发表 1-已发表） -->
+    <select id="momentRateSince" resultType="map">
+        SELECT COUNT(*)                                             AS totalCnt,
+               SUM(CASE WHEN s.publish_status = 1 THEN 1 ELSE 0 END) AS publishedCnt
+        FROM wx_moment_send_log s
+        INNER JOIN wx_moment_invoke_log i ON i.id = s.invoke_id
+        WHERE i.corp_id = #{corpId}
+          AND i.create_time &gt;= #{since}
+          <if test="until != null">
+              AND i.create_time &lt; #{until}
+          </if>
+    </select>
+
+    <select id="memberRank" resultType="map">
+        SELECT user_id AS userId, COUNT(*) AS cnt
+        FROM wx_customer
+        WHERE corp_id = #{corpId}
+          AND user_id IS NOT NULL
+          AND user_id != ''
+        GROUP BY user_id
+        ORDER BY cnt DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>
