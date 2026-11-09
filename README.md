@@ -6,6 +6,11 @@
 
 配套前端为同级目录 [`../portal-ui`](../portal-ui)（Vue Vben Admin 5.x monorepo），本地开发后端默认监听 `:8080`。
 
+## 仓库地址
+
+- 后端 portal-service（本仓库）：<https://github.com/csx-bill/portal-service>
+- 前端 portal-ui：<https://github.com/csx-bill/portal-ui>
+
 ## 技术栈
 
 | 类别 | 选型 |
