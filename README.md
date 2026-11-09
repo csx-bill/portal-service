@@ -4,8 +4,6 @@
 
 企业门户平台后端，采用 `Java 21`、`Spring Boot 4`、`Maven` 多模块单体架构。系统管理、认证授权（OAuth2）等构成平台底座.业务能力以独立模块的形式接入,全平台基于多租户实现数据隔离。
 
-配套前端为同级目录 [`../portal-ui`](../portal-ui)（Vue Vben Admin 5.x monorepo），本地开发后端默认监听 `:8080`。
-
 ## 仓库地址
 
 - 后端 portal-service（本仓库）：<https://github.com/csx-bill/portal-service>
@@ -121,7 +119,3 @@ java -jar portal-boot/target/portal-boot-4.1.0.jar
 - 数据库脚本：[`deploy/portal-service.sql`](deploy/portal-service.sql)。
 - 文件直服：local 存储的生产形态参考 [`deploy/nginx-upload.conf.sample`](deploy/nginx-upload.conf.sample)，通过 `file` 配置的 public-base-url 切换「应用转发 / Nginx 直连」两种形态。
 - API 文档默认开启（`knife4j.production: false`），生产环境建议置为 `true` 关闭文档入口。
-
-## 相关项目
-
-- [portal-ui](../portal-ui)：门户平台前端，基于 Vue Vben Admin 5.x 的 monorepo（模块联邦架构）。

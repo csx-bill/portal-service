@@ -81,8 +81,8 @@ public class SelfCorpAuthInitializer {
                 // 首次启动：插入新的授权记录
                 WxCorpAuth newAuth = new WxCorpAuth();
                 newAuth.setCorpId(corpId);
-                // 企业名称可在配置文件中调整（xqt.wx.self-corp-name，默认"新企通"）
-                newAuth.setCorpName(environment.getProperty("xqt.wx.self-corp-name", "新企通"));
+                // 企业名称
+                newAuth.setCorpName(environment.getProperty("xqt.wx.self-corp-name"));
                 newAuth.setCorpType("SELF"); // 标记为自建应用类型
                 newAuth.setAuthStatus(1);    // 授权状态正常
                 newAuth.setCreateTime(LocalDateTime.now());
