@@ -17,6 +17,7 @@ import me.chanjar.weixin.cp.config.WxCpConfigStorage;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +46,8 @@ public class SelfCorpAuthInitializer {
     private final WxCorpAuthMapper wxCorpAuthMapper;
 
     private final WxCorpApiStrategy wxCorpApiStrategy;
+
+    private final Environment environment;
 
     /**
      * 监听应用启动就绪事件，执行初始化逻辑
@@ -78,7 +81,8 @@ public class SelfCorpAuthInitializer {
                 // 首次启动：插入新的授权记录
                 WxCorpAuth newAuth = new WxCorpAuth();
                 newAuth.setCorpId(corpId);
-                newAuth.setCorpName("新企通");
+                // 企业名称可在配置文件中调整（xqt.wx.self-corp-name，默认"新企通"）
+                newAuth.setCorpName(environment.getProperty("xqt.wx.self-corp-name", "新企通"));
                 newAuth.setCorpType("SELF"); // 标记为自建应用类型
                 newAuth.setAuthStatus(1);    // 授权状态正常
                 newAuth.setCreateTime(LocalDateTime.now());
